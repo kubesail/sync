@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kubesail-sync
+  labels:
+    app: kubesail-sync
+spec:
+  selector:
+    matchLabels:
+      app: kubesail-sync
+  minReadySeconds: 1
+  strategy:
+    type: Recreate
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: kubesail-sync
+    spec:
+      terminationGracePeriodSeconds: 0
+      containers:
+        - name: sync
+          image: kubesail/sync
+          imagePullPolicy: IfNotPresent
+          terminationMessagePolicy: FallbackToLogsOnError
+          ports:
+            - name: https-ports
+              containerPort: 9099
+          resources:
+            requests:
+              cpu: 50m
+              memory: 100Mi
+            limits:
+              cpu: "2"
+              memory: 1500Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kubesail-sync
+spec:
+  type: NodePort
+  ports:
+    - name: https-ports
+      port: 9099
+      protocol: TCP
+      targetPort: https-ports
+  selector:
+    app: kubesail-sync

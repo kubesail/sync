@@ -15,8 +15,6 @@ TAG="kubesail/sync:v$(cat VERSION.txt)"
 # Troubleshooting:
 # buildx stop... buildx inspect --bootstrap
 
-./bin/generate_self_signed_cert.sh
-
 BUILDX_PREFIX="docker buildx"
 command -v buildx > /dev/null && BUILDX_PREFIX="buildx"
 

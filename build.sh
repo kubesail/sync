@@ -1,6 +1,6 @@
 #!/bin/bash
 
-TAG="kubesail/sync:v$(cat ../VERSION.txt)"
+TAG="kubesail/sync:v$(cat VERSION.txt)"
 
 # Enable docker experimental mode:
 #  - echo '{ "experimental": true }' > /etc/docker/daemon.json
@@ -21,3 +21,5 @@ BUILDX_PREFIX="docker buildx"
 command -v buildx > /dev/null && BUILDX_PREFIX="buildx"
 
 ${BUILDX_PREFIX} build --pull --platform linux/amd64,linux/arm64,linux/arm/v7 -t ${TAG} --push .
+
+${BUILDX_PREFIX} build --platform linux/amd64,linux/arm64,linux/arm/v7 -t latest --push .

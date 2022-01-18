@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -eo pipefail
+
 if kubectl get secret kubesail-sync > /dev/null; then
   echo "Loading certificate from existing kubesail-sync secret"
   mkdir -p k8s/secrets
@@ -8,7 +10,7 @@ if kubectl get secret kubesail-sync > /dev/null; then
 else
   echo "Creating new kubesail-sync secret"
   ./bin/generate_self_signed_cert.sh
-  kubectl create secret tls kubesail-sync --cert=k8s/secrets/tls.crt --key=k8s/secrets/tls.key
+  kubectl create secret generic kubesail-sync --from-file=cert=k8s/secrets/tls.crt --from-file=key=k8s/secrets/tls.key --from-file=pubkey=k8s/secrets/pubkey.txt
   kubectl label secret kubesail-sync kubesail/sync=true
 fi
 

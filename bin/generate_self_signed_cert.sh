@@ -15,4 +15,5 @@ if [[ ! -f "${SECRETS_DIR}/tls.crt" || ! -f "${SECRETS_DIR}/tls.key" ]]; then
   openssl x509 \
       -req -sha256 -days 365 -in ${SECRETS_DIR}/tls.csr -signkey ${SECRETS_DIR}/tls.key -out ${SECRETS_DIR}/tls.crt
   rm ${SECRETS_DIR}/tls.pass.key
+  openssl x509 -in ${SECRETS_DIR}/tls.crt -pubkey -noout > ${SECRETS_DIR}/pubkey.txt
 fi

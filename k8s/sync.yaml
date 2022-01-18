@@ -1,3 +1,30 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kubesail-sync
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: kubesail-sync
+rules:
+  - apiGroups: ["*"]
+    resources: ["*"]
+    verbs: ["*"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: kubesail-sync
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: kubesail-sync
+subjects:
+  - kind: ServiceAccount
+    name: kubesail-sync
+    namespace: default
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -17,6 +44,7 @@ spec:
       labels:
         app: kubesail-sync
     spec:
+      serviceAccountName: kubesail-sync
       terminationGracePeriodSeconds: 0
       containers:
         - name: sync

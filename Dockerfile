@@ -12,7 +12,7 @@ WORKDIR /home/node/app
 RUN mkdir -p /home/node/app/service && \
   chown -R node:node /home/node/app && \
   apt-get update -yqq && \
-  apt-get install -yqq openssl curl && \
+  apt-get install -yqq openssl curl jq && \
   curl -sLo kubectl https://dl.k8s.io/v1.22.5/bin/linux/${BUILDPLATFORM}/kubectl && chmod +x kubectl && mv kubectl /usr/local/bin
 USER node
 COPY --chown=node:node package.json yarn.lock ./

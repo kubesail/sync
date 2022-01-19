@@ -14,4 +14,6 @@ if [[ ! -f "${SECRETS_DIR}/tls.crt" || ! -f "${SECRETS_DIR}/tls.key" ]]; then
 
   openssl x509 -in ${SECRETS_DIR}/tls.crt -pubkey -noout | openssl rsa -pubin -outform der > ${SECRETS_DIR}/tls.der
   cat ${SECRETS_DIR}/tls.der | openssl dgst -sha256 -binary | openssl enc -base64 > ${SECRETS_DIR}/pubkey.txt
+
+  echo "Done generating certificates"
 fi

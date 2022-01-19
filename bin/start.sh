@@ -10,7 +10,12 @@ if kubectl get secret kubesail-sync > /dev/null; then
 else
   echo "Creating new kubesail-sync secret"
   ./bin/generate_self_signed_cert.sh
-  kubectl create secret generic kubesail-sync --from-file=tls.crt=k8s/secrets/tls.crt --from-file=tls.key=k8s/secrets/tls.key --from-file=pubkey=k8s/secrets/pubkey.txt --from-file=der=k8s/secrets/tls.der
+  kubectl create secret generic kubesail-sync \
+    --from-file=tls.crt=k8s/secrets/tls.crt \
+    --from-file=tls.key=k8s/secrets/tls.key \
+    --from-file=pubkey=k8s/secrets/pubkey.txt \
+    --from-file=der=k8s/secrets/tls.der \
+    --from-file=ca=8s/secrets/ca.crt
   kubectl label secret kubesail-sync kubesail/sync=true
 fi
 

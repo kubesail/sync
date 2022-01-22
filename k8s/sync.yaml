@@ -1,21 +1,9 @@
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: kubesail-sync
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  name: kubesail-sync
-rules:
-  - apiGroups: ["*"]
-    resources: ["*"]
-    verbs: ["*"]
----
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: kubesail-sync
+  annotations:
+    kubesailEditorUid: 2a4c3a83-8a06-4d38-9d56-f3d919a29b3d
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -24,6 +12,22 @@ subjects:
   - kind: ServiceAccount
     name: kubesail-sync
     namespace: default
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: kubesail-sync
+  annotations:
+    kubesailEditorUid: 91d835f0-b1a8-4952-a084-bd0e3346fa4e
+rules:
+  - apiGroups:
+      - "*"
+    resources:
+      - "*"
+    verbs:
+      - "*"
+
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -31,14 +35,16 @@ metadata:
   name: kubesail-sync
   labels:
     app: kubesail-sync
+  annotations:
+    kubesailEditorUid: 5d9942b5-5c6c-4095-b5cc-0f2f768a325b
+    kubesail.com/template: erulabs/kubesail-sync
 spec:
-  selector:
-    matchLabels:
-      app: kubesail-sync
-  minReadySeconds: 1
   strategy:
     type: Recreate
   replicas: 1
+  selector:
+    matchLabels:
+      app: kubesail-sync
   template:
     metadata:
       labels:
@@ -47,31 +53,62 @@ spec:
       serviceAccountName: kubesail-sync
       terminationGracePeriodSeconds: 0
       containers:
-        - name: sync
+        - name: kubesail-sync
           image: kubesail/sync
           imagePullPolicy: IfNotPresent
           terminationMessagePolicy: FallbackToLogsOnError
           ports:
             - name: https-ports
               containerPort: 9099
-          resources:
-            requests:
-              cpu: 50m
-              memory: 100Mi
-            limits:
-              cpu: "2"
-              memory: 1500Mi
+      volumes: []
+
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: kubesail-sync
+  labels:
+    app: kubesail-sync
 spec:
   type: NodePort
   ports:
     - name: https-ports
-      port: 9099
       protocol: TCP
+      port: 9099
       targetPort: https-ports
   selector:
     app: kubesail-sync
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kubesail-sync
+  labels:
+    app: kubesail-sync
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: 500m
+    nginx.org/websocket-services: kubesail-sync
+    kubernetes.io/tls-acme: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: HTTPS
+spec:
+  tls:
+    - hosts:
+        - kubesail-sync.local
+      secretName: kubesail-sync-ingress
+  rules:
+    - host: kubesail-sync.local
+      http:
+        paths:
+          - pathType: ImplementationSpecific
+            backend:
+              service:
+                name: kubesail-sync
+                port:
+                  number: 9099
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kubesail-sync

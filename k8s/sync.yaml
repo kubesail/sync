@@ -57,6 +57,9 @@ spec:
           image: kubesail/sync
           imagePullPolicy: IfNotPresent
           terminationMessagePolicy: FallbackToLogsOnError
+          env:
+            - name: NODE_ENV
+              value: development
           ports:
             - name: https-ports
               containerPort: 9099

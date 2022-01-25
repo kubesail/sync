@@ -1,5 +1,6 @@
 const https = require('https')
 const fs = require('fs')
+const path = require('path')
 const express = require('express')
 const multer = require('multer')
 const morgan = require('morgan')
@@ -49,22 +50,42 @@ app.get('/:tag/check', (req, res) => {
   const missing = Buffer.from(req.query.check || '', 'base64')
     .toString()
     .split('|')
-    .map(id => encodeURIComponent(id))
-    .filter(id => {
+    .map(filename => encodeURIComponent(decodeURIComponent(filename)))
+    .filter(filename => {
       try {
-        fs.statSync(`${dirs.photos}/${req.device}/${id}`)
+        fs.statSync(`${dirs.photos}/${req.device}/${filename}`)
       } catch (err) {
         if (err.code === 'ENOENT') return true
       }
     })
+    .map(filename => decodeURIComponent(filename))
   return res.send({ missing })
 })
 
-const photoUploader = multer({ dest: dirs.photos })
-app.post('/photos/upload', photoUploader.array('photos', 12), function (req, res, next) {})
+const storage = multer.diskStorage({
+  destination: function (req, _file, cb) {
+    const uploadPath = path.join(dirs.photos, req.device)
+    fs.stat(uploadPath, err => {
+      if (!err) {
+        cb(null, uploadPath)
+      } else if (err.code === 'ENOENT') {
+        fs.mkdir(uploadPath, err => {
+          if (!err) cb(null, uploadPath)
+          else throw err
+        })
+      } else throw err
+    })
+  },
+  filename: function (_req, file, cb) {
+    cb(null, file.originalname)
+  },
+})
 
-const mediaUploader = multer({ dest: dirs.media })
-app.post('/media/upload', mediaUploader.array('media', 12), function (req, res, next) {})
+const uploaderMiddleware = multer({ storage: storage })
+app.post('/photos/upload', uploaderMiddleware.any(), (req, res) => {
+  console.log(`Uploaded ${req.files.length} files to ${dirs.photos}/${req.device}`)
+  return res.sendStatus(200)
+})
 
 httpsServer.listen(9099, () => {
   console.log(`Example app listening at https://localhost:9099`)

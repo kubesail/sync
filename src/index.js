@@ -1,6 +1,7 @@
 const https = require('https')
 const fs = require('fs')
 const path = require('path')
+const { exec } = require('child_process')
 const express = require('express')
 const multer = require('multer')
 const morgan = require('morgan')
@@ -47,19 +48,32 @@ app.use((req, res, next) => {
 })
 
 app.get('/:tag/check', (req, res) => {
-  const missing = Buffer.from(req.query.check || '', 'base64')
-    .toString()
-    .split('|')
-    .map(filename => encodeURIComponent(decodeURIComponent(filename)))
-    .filter(filename => {
-      try {
-        fs.statSync(`${dirs.photos}/${req.device}/${filename}`)
-      } catch (err) {
-        if (err.code === 'ENOENT') return true
-      }
+  if (!req.query.check) {
+    let deviceTotal = 0
+    try {
+      deviceTotal = fs.readdirSync(`${dirs.photos}/${req.device}`).length
+    } catch (err) {
+      if (err.code !== 'ENOENT') throw err
+    }
+    exec(`df ${dirs.photos} | tail -n1 | awk '{print $4}'`, (err, stdout, stderr) => {
+      if (err) throw err
+      return res.send({ deviceTotal, bytesFree: stdout.trim() })
     })
-    .map(filename => decodeURIComponent(filename))
-  return res.send({ missing })
+  } else {
+    const missing = Buffer.from(req.query.check || '', 'base64')
+      .toString()
+      .split('|')
+      .map(filename => encodeURIComponent(decodeURIComponent(filename)))
+      .filter(filename => {
+        try {
+          fs.statSync(`${dirs.photos}/${req.device}/${filename}`)
+        } catch (err) {
+          if (err.code === 'ENOENT') return true
+        }
+      })
+      .map(filename => decodeURIComponent(filename))
+    return res.send({ missing })
+  }
 })
 
 const storage = multer.diskStorage({
@@ -70,7 +84,7 @@ const storage = multer.diskStorage({
         cb(null, uploadPath)
       } else if (err.code === 'ENOENT') {
         fs.mkdir(uploadPath, err => {
-          if (!err) cb(null, uploadPath)
+          if (!err || err.code === 'EEXIST') cb(null, uploadPath)
           else throw err
         })
       } else throw err

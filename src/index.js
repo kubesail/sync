@@ -40,6 +40,9 @@ app.use((req, res, next) => {
     req.headers['x-sync-key'] === authKey
   ) {
     req.device = req.headers['x-sync-device']
+    req.dirs = {
+      photos: path.join(dirs.photos, req.device),
+    }
     next()
   } else {
     console.error('Rejected access with a missing x-sync-key')
@@ -51,13 +54,14 @@ app.get('/:tag/check', (req, res) => {
   if (!req.query.check) {
     let deviceTotal = 0
     try {
-      deviceTotal = fs.readdirSync(`${dirs.photos}/${req.device}`).length
+      deviceTotal = fs.readdirSync(req.dirs.photos).length
     } catch (err) {
       if (err.code !== 'ENOENT') throw err
     }
     exec(`df ${dirs.photos} | tail -n1 | awk '{print $4}'`, (err, stdout, stderr) => {
       if (err) throw err
-      return res.send({ deviceTotal, bytesFree: stdout.trim() })
+      const bytesFree = stdout.trim()
+      return res.send({ deviceTotal, bytesFree })
     })
   } else {
     const missing = Buffer.from(req.query.check || '', 'base64')
@@ -66,7 +70,7 @@ app.get('/:tag/check', (req, res) => {
       .map(filename => encodeURIComponent(decodeURIComponent(filename)))
       .filter(filename => {
         try {
-          fs.statSync(`${dirs.photos}/${req.device}/${filename}`)
+          fs.statSync(`${req.dirs.photos}/${filename}`)
         } catch (err) {
           if (err.code === 'ENOENT') return true
         }
@@ -78,13 +82,12 @@ app.get('/:tag/check', (req, res) => {
 
 const storage = multer.diskStorage({
   destination: function (req, _file, cb) {
-    const uploadPath = path.join(dirs.photos, req.device)
-    fs.stat(uploadPath, err => {
+    fs.stat(req.dirs.photos, err => {
       if (!err) {
-        cb(null, uploadPath)
+        cb(null, req.dirs.photos)
       } else if (err.code === 'ENOENT') {
-        fs.mkdir(uploadPath, err => {
-          if (!err || err.code === 'EEXIST') cb(null, uploadPath)
+        fs.mkdir(req.dirs.photos, err => {
+          if (!err || err.code === 'EEXIST') cb(null, req.dirs.photos)
           else throw err
         })
       } else throw err
@@ -97,7 +100,7 @@ const storage = multer.diskStorage({
 
 const uploaderMiddleware = multer({ storage: storage })
 app.post('/photos/upload', uploaderMiddleware.any(), (req, res) => {
-  console.log(`Uploaded ${req.files.length} files to ${dirs.photos}/${req.device}`)
+  console.log(`Uploaded ${req.files.length} files to ${req.dirs.photos}`)
   return res.sendStatus(200)
 })
 

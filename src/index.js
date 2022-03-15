@@ -99,9 +99,9 @@ const storage = multer.diskStorage({
   },
 })
 
-const uploaderMiddleware = multer({ storage: storage })
+const uploaderMiddleware = multer({ storage })
 app.post('/photos/upload', uploaderMiddleware.any(), (req, res) => {
-  console.log(`Uploaded ${req.files.length} files to ${req.dirs.photos}`)
+  console.log(`Uploaded ${req?.files?.length || 0} files to ${req.dirs.photos}`)
   return res.sendStatus(200)
 })
 

@@ -1,3 +1,4 @@
+const http = require('http')
 const https = require('https')
 const fs = require('fs')
 const path = require('path')
@@ -19,6 +20,7 @@ const httpsServer = https.createServer(
   },
   app
 )
+const httpServer = http.createServer(app)
 
 app.use(helmet.hsts({ maxAge: 31536000000, includeSubDomains: true, force: true }))
 app.use(
@@ -32,7 +34,6 @@ app.use(
   })
 )
 app.disable('x-powered-by')
-
 app.use((req, res, next) => {
   if (
     req.headers['x-sync-device'] &&
@@ -105,5 +106,7 @@ app.post('/photos/upload', uploaderMiddleware.any(), (req, res) => {
 })
 
 httpsServer.listen(9099, () => {
-  console.log(`Example app listening at https://localhost:9099`)
+  httpServer.listen(9098, () => {
+    console.log(`Example app listening at https://localhost:9099`)
+  })
 })

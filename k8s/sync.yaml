@@ -61,24 +61,42 @@ spec:
             - name: NODE_ENV
               value: development
           ports:
-            - name: https-ports
+            - name: https
               containerPort: 9099
-      volumes: []
-
+            - name: http
+              containerPort: 9098
 ---
-apiVersion: v1
 kind: Service
 metadata:
   name: kubesail-sync
   labels:
     app: kubesail-sync
+  annotations:
+    kubesailEditorUid: 6ddcefe8-2b31-4c43-9d9a-67cb12a3fec7
+apiVersion: v1
+spec:
+  ports:
+    - name: http
+      protocol: TCP
+      port: 9098
+      targetPort: http
+  selector:
+    app: kubesail-sync
+
+---
+kind: Service
+metadata:
+  name: kubesail-sync-nodeport
+  labels:
+    app: kubesail-sync
+apiVersion: v1
 spec:
   type: NodePort
   ports:
-    - name: https-ports
+    - name: https
       protocol: TCP
       port: 9099
-      targetPort: https-ports
+      targetPort: https
   selector:
     app: kubesail-sync
 
@@ -93,12 +111,12 @@ metadata:
     nginx.ingress.kubernetes.io/proxy-body-size: 500m
     nginx.org/websocket-services: kubesail-sync
     kubernetes.io/tls-acme: "true"
-    nginx.ingress.kubernetes.io/backend-protocol: HTTPS
 spec:
   tls:
     - hosts:
         - kubesail-sync.local
-      secretName: kubesail-sync-ingress
+    - hosts:
+        - kubesail-sync.a-dev-cluster.erulabs.dev.k8g8.com
   rules:
     - host: kubesail-sync.local
       http:
@@ -108,10 +126,37 @@ spec:
               service:
                 name: kubesail-sync
                 port:
-                  number: 9099
+                  name: http
+    - host: kubesail-sync.a-dev-cluster.erulabs.dev.k8g8.com
+      http:
+        paths:
+          - pathType: ImplementationSpecific
+            backend:
+              service:
+                name: kubesail-sync
+                port:
+                  name: http
 
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: kubesail-sync
+  annotations:
+    kubesailEditorUid: dc48bfa4-6929-4b04-ae43-7d4b3a0e08b9
+
+---
+kind: PersistentVolumeClaim
+metadata:
+  name: photos
+  labels:
+    app: photos
+  annotations:
+    kubesailEditorUid: 17383dc9-4523-4d2f-b690-1711388bb337
+apiVersion: v1
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Gi

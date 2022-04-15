@@ -9,17 +9,28 @@ const morgan = require('morgan')
 const helmet = require('helmet')
 const { dirs } = require('./config')
 
-const authKey = fs.readFileSync('k8s/secrets/pass.key').toString().trim()
 const app = express()
-const httpsServer = https.createServer(
-  {
-    key: fs.readFileSync('k8s/secrets/tls.key'),
-    cert: fs.readFileSync('k8s/secrets/tls.crt'),
-    ca: fs.readFileSync('k8s/secrets/ca.crt'),
-    honorCipherOrder: true,
-  },
-  app
-)
+
+let authKey = process.env.SYNC_AUTH_KEY || ''
+let httpsServer
+
+if (fs.existsSync('k8s/secrets/pass.key')) {
+  authKey = fs.readFileSync('k8s/secrets/pass.key').toString().trim()
+  httpsServer = https.createServer(
+    {
+      key: fs.readFileSync('k8s/secrets/tls.key'),
+      cert: fs.readFileSync('k8s/secrets/tls.crt'),
+      ca: fs.readFileSync('k8s/secrets/ca.crt'),
+      honorCipherOrder: true,
+    },
+    app
+  )
+}
+
+if (!authKey || authKey.length < 8) {
+  throw new Error('Invalid SYNC_AUTH_KEY')
+}
+
 const httpServer = http.createServer(app)
 
 app.use(helmet.hsts({ maxAge: 31536000000, includeSubDomains: true, force: true }))
@@ -105,8 +116,13 @@ app.post('/photos/upload', uploaderMiddleware.any(), (req, res) => {
   return res.sendStatus(200)
 })
 
-httpsServer.listen(9099, () => {
-  httpServer.listen(9098, () => {
-    console.log(`Example app listening at https://localhost:9099`)
+if (httpsServer) {
+  httpsServer.listen(9099, () => {
+    console.log(`KubeSail Sync listening at https://localhost:9099`)
   })
+} else {
+  console.warn('HTTPS DISABLED')
+}
+httpServer.listen(9098, () => {
+  console.log(`KubeSail Sync listening at http://localhost:9098`)
 })

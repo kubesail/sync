@@ -5,11 +5,12 @@
   "author": "Seandon 'erulabs' Mooy",
   "license": "MIT",
   "dependencies": {
+    "@nodelib/fs.scandir": "^2.1.5",
     "compression": "^1.7.4",
     "connect-timeout": "^1.9.0",
     "cookie-parser": "^1.4.6",
-    "express": "^4.17.2",
-    "helmet": "^5.0.1",
+    "express": "^4.17.3",
+    "helmet": "^5.0.2",
     "morgan": "^1.10.0",
     "multer": "^1.4.4",
     "nodemon": "^2.0.15"

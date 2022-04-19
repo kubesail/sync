@@ -52,6 +52,10 @@ spec:
     spec:
       serviceAccountName: kubesail-sync
       terminationGracePeriodSeconds: 0
+      volumes:
+        - name: fm-pvc
+          persistentVolumeClaim:
+            claimName: photos
       containers:
         - name: kubesail-sync
           image: kubesail/sync
@@ -60,11 +64,16 @@ spec:
           env:
             - name: NODE_ENV
               value: development
+            - name: API_CORS_ALLOWED_ORIGINS
+              value: "*"
           ports:
             - name: https
               containerPort: 9099
             - name: http
               containerPort: 9098
+          volumeMounts:
+            - mountPath: /mnt/pvc
+              name: fm-pvc
 ---
 kind: Service
 metadata:

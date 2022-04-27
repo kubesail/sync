@@ -42,17 +42,13 @@ app.use(helmet.hsts({ maxAge: 31536000000, includeSubDomains: true, force: true 
 const allowedOrigins = API_CORS_ALLOWED_ORIGINS.split(',')
 app.use((req, res, next) => {
   const allowedCors =
-    API_CORS_ALLOWED_ORIGINS === '*' ? 1 : allowedOrigins.indexOf(req.headers.origin)
+    API_CORS_ALLOWED_ORIGINS === '*' ? 0 : allowedOrigins.indexOf(req.headers.origin)
   if (allowedCors > -1) {
     res.header(
       'Access-Control-Allow-Origin',
       API_CORS_ALLOWED_ORIGINS === '*' ? '*' : allowedOrigins[allowedCors]
     )
-    const allowCredentials = allowedOrigins.includes(allowedOrigins[allowedCors])
-    res.header(
-      'Access-Control-Allow-Credentials',
-      API_CORS_ALLOWED_ORIGINS === '*' || allowCredentials ? 'true' : 'false'
-    )
+    res.header('Access-Control-Allow-Credentials', allowedCors > -1 ? 'true' : 'false')
   }
   res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,PATCH,DELETE')
   res.header('Access-Control-Max-Age', '3600')

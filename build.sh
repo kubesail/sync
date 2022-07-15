@@ -21,6 +21,6 @@ TAG="${IMAGE}:v$(cat VERSION.txt)"
 BUILDX_PREFIX="docker buildx"
 command -v buildx > /dev/null && BUILDX_PREFIX="buildx"
 
-${BUILDX_PREFIX} build --pull --platform linux/amd64,linux/arm64,linux/arm/v7 -t ${TAG} --push .
+DOCKER_BUILDKIT=1 ${BUILDX_PREFIX} build --pull --platform linux/amd64,linux/arm64 -t ${TAG} --push .
 
-${BUILDX_PREFIX} build --platform linux/amd64,linux/arm64,linux/arm/v7 -t "${IMAGE}:latest" --push .
+DOCKER_BUILDKIT=1 ${BUILDX_PREFIX} build --platform linux/amd64,linux/arm64 -t "${IMAGE}:latest" --push .

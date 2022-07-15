@@ -18,4 +18,4 @@ TAG="kubesail/sync:v$(cat VERSION.txt)"
 BUILDX_PREFIX="docker buildx"
 command -v buildx > /dev/null && BUILDX_PREFIX="buildx"
 
-DOCKER_BUILDKIT=1 ${BUILDX_PREFIX} build --pull --platform linux/amd64,linux/arm64,linux/arm/v7 -t ${TAG} --push .
+DOCKER_BUILDKIT=1 ${BUILDX_PREFIX} build --pull --platform linux/amd64,linux/arm64 -t ${TAG} --push .

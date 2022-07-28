@@ -81,11 +81,15 @@ app.use((req, res, next) => {
   if (req.method === 'OPTIONS') return next()
   const syncDevice = req.query['x-sync-device'] || req.headers['x-sync-device']
   const syncKey = req.query['x-sync-key'] || req.headers['x-sync-key']
-
-  if (syncDevice && syncKey && syncKey === authKey) {
-    req.device = syncDevice
-    req.dirs = { photos: path.join(dirs.photos, syncDevice) }
-    next()
+  if (syncDevice && syncKey) {
+    if (syncKey === authKey) {
+      req.device = syncDevice
+      req.dirs = { photos: path.join(dirs.photos, syncDevice) }
+      next()
+    } else {
+      console.error('Rejected access with an invalid x-sync-key')
+      return res.sendStatus(403)
+    }
   } else {
     console.error('Rejected access with a missing x-sync-key')
     return res.sendStatus(403)

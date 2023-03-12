@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.3
 
-FROM node:16-bullseye-slim
+FROM node:18-bullseye-slim
 ARG TARGETARCH
 ENV NODE_ENV="production" \
   HTTPS="true" \
